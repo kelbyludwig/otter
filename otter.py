@@ -81,13 +81,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
     
-        # only process requests
         if not messageIsRequest:
-        
             # create a new log entry with the message details
             self._lock.acquire()
             row = self._log.size()
-            self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(messageInfo), self._helpers.analyzeRequest(messageInfo).getUrl()))
+            request = self._helpers.analyzeRequest(messageInfo)
+            response_bytes = messageInfo.getResponse()
+            response = self._helpers.analyzeResponse(response_bytes)
+            self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(messageInfo), request.getUrl(), response.getStatusCode(), len(response_bytes)))
             self.fireTableRowsInserted(row, row)
             self._lock.release()
         return
@@ -103,17 +104,25 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return 0
 
     def getColumnCount(self):
-        return 1
+        return 3
 
     def getColumnName(self, columnIndex):
         if columnIndex == 0:
             return "URL"
+        if columnIndex == 1:
+            return "Orig. Status"
+        if columnIndex == 2:
+            return "Orig. Length"
         return ""
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._log.get(rowIndex)
         if columnIndex == 0:
             return logEntry._url.toString()
+        if columnIndex == 1:
+            return str(logEntry._origStatus)
+        if columnIndex == 2:
+            return str(logEntry._origLength)
         return ""
 
     #
@@ -158,7 +167,9 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, requestResponse, url):
+    def __init__(self, requestResponse, url, origStatus, origLength):
         self._requestResponse = requestResponse
         self._url = url
+        self._origStatus = origStatus
+        self._origLength = origLength
         return
