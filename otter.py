@@ -87,7 +87,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             # create a new log entry with the message details
             self._lock.acquire()
             row = self._log.size()
-            self._log.add(LogEntry(toolFlag, self._callbacks.saveBuffersToTempFiles(messageInfo), self._helpers.analyzeRequest(messageInfo).getUrl()))
+            self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(messageInfo), self._helpers.analyzeRequest(messageInfo).getUrl()))
             self.fireTableRowsInserted(row, row)
             self._lock.release()
         return
@@ -103,20 +103,16 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return 0
 
     def getColumnCount(self):
-        return 2
+        return 1
 
     def getColumnName(self, columnIndex):
         if columnIndex == 0:
-            return "Tool"
-        if columnIndex == 1:
             return "URL"
         return ""
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._log.get(rowIndex)
         if columnIndex == 0:
-            return self._callbacks.getToolName(logEntry._tool)
-        if columnIndex == 1:
             return logEntry._url.toString()
         return ""
 
@@ -162,8 +158,7 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, tool, requestResponse, url):
-        self._tool = tool
+    def __init__(self, requestResponse, url):
         self._requestResponse = requestResponse
         self._url = url
         return
