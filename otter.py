@@ -16,9 +16,14 @@ from javax.swing import JCheckBox;
 from javax.swing import JPanel;
 from javax.swing import SwingUtilities;
 from javax.swing.table import AbstractTableModel;
+from org.python.core.util.StringUtil import fromBytes, toBytes;
 from threading import Lock
 from re import search, sub
-from string import replace
+from string import replace, find
+
+#TODO(kkl): Make the table UI sortable.
+#TODO(kkl): A setting for hiding unmodified requests/responses.
+#TODO(kkl): Allow for a configurable amount of request modifications.
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
     
@@ -150,8 +155,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                     requestBytes = sub(self._matchString.getText(), self._replaceString.getText(), requestBytes)
                     wasModified = True
             else:
-                if self._matchString in requestBytes:
-                    requestBytes = replace(requestBytes, self._matchString, self._replaceString)
+                if fromBytes(requestBytes).find(self._matchString.getText()) >= 0:
+                    requestBytes = toBytes(replace(fromBytes(requestBytes), self._matchString.getText(), self._replaceString.getText()))
                     wasModified = True
 
             # make a modified request to test for authorization issues
@@ -252,8 +257,10 @@ class Table(JTable):
         if not logEntry._modRequestResponse is None:
             self._extender._modRequestViewer.setMessage(logEntry._modRequestResponse.getRequest(), True)
             self._extender._modResponseViewer.setMessage(logEntry._modRequestResponse.getResponse(), False)
+        else:
+            self._extender._modRequestViewer.setMessage(toBytes(""), True)
+            self._extender._modResponseViewer.setMessage(toBytes(""), False)
         self._extender._currentlyDisplayedItem = logEntry._origRequestResponse
-        
         JTable.changeSelection(self, row, col, toggle, extend)
         return
     
