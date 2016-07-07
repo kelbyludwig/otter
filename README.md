@@ -16,6 +16,19 @@ make testing application access controls as simple as browsing the application.
 * Be generally useful: Otter should be useful in most cases. It will not make
   assumptions about how APIs typically work.
 
+## setup 
+
+* Install the Burp extension: "Extender" -> "Extensions" -> "Add" -> "Extension
+  Type: Python" -> Browser to otter.py
+
+* Otter will ignore requests based on your scope configuration: "Target" ->
+  "Scope"
+
+* Configure your session match-and-replace in otter's "Settings" tab. Only
+  requests that include the "String to Match" somewhere in the request will be
+  modified and re-sent. Unmodified requests are noted in the UI with the
+  "Request Modified?" column.
+
 ## why "otter"?
 
 It sounds similar to "Author".
