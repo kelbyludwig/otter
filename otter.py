@@ -75,7 +75,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._settingPanel.add(replaceString)
         
         # table of log entries
-        logTable = JTable(self)
+        logTable = Table(self)
         logTable.getColumnModel().getColumn(0).setPreferredWidth(700)
         logTable.getColumnModel().getColumn(1).setPreferredWidth(100)
         logTable.getColumnModel().getColumn(2).setPreferredWidth(150)
@@ -150,8 +150,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             modResponse = self._helpers.analyzeResponse(modResponseBytes)
 
             orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
-            modd = self._callbacks.saveBuffersToTempFiles(modReqResp)
-            entry = LogEntry(orig, modd, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes))
+            mod = self._callbacks.saveBuffersToTempFiles(modReqResp)
+            entry = LogEntry(orig, mod, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes))
 
             self._lock.acquire()
             self._log.add(entry)
