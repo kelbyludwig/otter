@@ -25,6 +25,9 @@ from string import replace, find
 #TODO(kkl): A setting for hiding unmodified requests/responses.
 #TODO(kkl): Allow for a configurable amount of request modifications.
 #TODO(kkl): Ignore typically static file extensions by default (e.g. js, css). Allow for opt-out..
+#TODO(kkl): Another useful response difference metric could be difflib's
+#           `ratio` method. This would likely require hideable columns in the log-entry as
+#           I don't think this would be useful by default to most.
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
     
