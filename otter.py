@@ -75,7 +75,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._settingPanel.add(replaceString)
         
         # table of log entries
-        logTable = Table(self)
+        logTable = JTable(self)
+        logTable.getColumnModel().getColumn(0).setPreferredWidth(700)
+        logTable.getColumnModel().getColumn(1).setPreferredWidth(100)
+        logTable.getColumnModel().getColumn(2).setPreferredWidth(150)
+        logTable.getColumnModel().getColumn(3).setPreferredWidth(100)
+        logTable.getColumnModel().getColumn(4).setPreferredWidth(150)
         scrollPane = JScrollPane(logTable)
         self._logPane.setLeftComponent(scrollPane)
 
