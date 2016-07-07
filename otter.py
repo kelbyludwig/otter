@@ -138,7 +138,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
    
         # Only process responses that came from the proxy. This will
         # ignore request/responses made by Otter itself.
-        # TODO(kkl): Only process in-scope requests.
         if not messageIsRequest and toolFlag == self._callbacks.TOOL_PROXY:
             # create a new log entry with the message details
             row = self._log.size()
@@ -148,6 +147,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             requestBytes = messageInfo.getRequest()
             request = self._helpers.analyzeRequest(messageInfo)
             response = self._helpers.analyzeResponse(responseBytes)
+            
+            # ignore out-of-scope requests.
+            if not self._callbacks.isInScope(request.getUrl()):
+                return
 
             wasModified = False
             if self._isRegexp.isSelected():
