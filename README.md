@@ -19,7 +19,7 @@ make testing application access controls as simple as browsing the application.
 ## setup 
 
 * Install the Burp extension: "Extender" -> "Extensions" -> "Add" -> "Extension
-  Type: Python" -> Browser to otter.py
+  Type: Python" -> Browse to otter.py
 
 * Otter will ignore requests based on your scope configuration: "Target" ->
   "Scope"
