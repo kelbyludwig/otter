@@ -10,6 +10,9 @@ from javax.swing import JScrollPane;
 from javax.swing import JSplitPane;
 from javax.swing import JTabbedPane;
 from javax.swing import JTable;
+from javax.swing import JLabel;
+from javax.swing import JTextArea;
+from javax.swing import JCheckBox;
 from javax.swing import JPanel;
 from javax.swing import SwingUtilities;
 from javax.swing.table import AbstractTableModel;
@@ -37,13 +40,44 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._lock = Lock()
        
         # main split pane for log entries and request/response viewing
-        self._settingpanel = JPanel()
-        self._logpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+        self._settingPanel = JPanel()
+        self._logPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+
+        # setup settings pane ui
+        self._settingPanel.setBounds(0,0,1000,1000)
+        self._settingPanel.setLayout(None)
+
+        self._isRegexp = JCheckBox("Use regexp for matching.")
+        self._isRegexp.setBounds(10, 10, 220, 20)
+
+        matchLabel = JLabel("String to Match:")
+        matchLabel.setBounds(10, 40, 200, 20)
+        self._matchString = JTextArea("User 1 Session Information")
+        self._matchString.setWrapStyleWord(True)
+        self._matchString.setLineWrap(True)
+        matchString = JScrollPane(self._matchString)
+        matchString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        matchString.setBounds(10, 60, 400, 200)
+
+        replaceLabel = JLabel("String to Replace:")
+        replaceLabel.setBounds(10, 270, 200, 20)
+        self._replaceString = JTextArea("User 2 Session Information")
+        self._replaceString.setWrapStyleWord(True)
+        self._replaceString.setLineWrap(True)
+        replaceString = JScrollPane(self._replaceString)
+        replaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        replaceString.setBounds(10, 290, 400, 200)
+
+        self._settingPanel.add(self._isRegexp)
+        self._settingPanel.add(matchLabel)
+        self._settingPanel.add(matchString)
+        self._settingPanel.add(replaceLabel)
+        self._settingPanel.add(replaceString)
         
         # table of log entries
         logTable = Table(self)
         scrollPane = JScrollPane(logTable)
-        self._logpane.setLeftComponent(scrollPane)
+        self._logPane.setLeftComponent(scrollPane)
 
         # tabs with request/response viewers
         logTabs = JTabbedPane()
@@ -51,12 +85,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._responseViewer = callbacks.createMessageEditor(self, False)
         logTabs.addTab("Request", self._requestViewer.getComponent())
         logTabs.addTab("Response", self._responseViewer.getComponent())
-        self._logpane.setRightComponent(logTabs)
+        self._logPane.setRightComponent(logTabs)
         
         # top most tab interface that seperates log entries from settings
         maintabs = JTabbedPane()
-        maintabs.addTab("Log Entries", self._logpane)
-        maintabs.addTab("Settings", self._settingpanel)
+        maintabs.addTab("Log Entries", self._logPane)
+        maintabs.addTab("Settings", self._settingPanel)
         self._maintabs = maintabs
        
         # customize the UI components
