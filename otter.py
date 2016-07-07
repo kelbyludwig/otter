@@ -17,6 +17,8 @@ from javax.swing import JPanel;
 from javax.swing import SwingUtilities;
 from javax.swing.table import AbstractTableModel;
 from threading import Lock
+from re import search, sub
+from string import replace
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
     
@@ -142,16 +144,29 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             request = self._helpers.analyzeRequest(messageInfo)
             response = self._helpers.analyzeResponse(responseBytes)
 
-            # make a modified request to test for authorization issues
-            # TODO(kkl): Modify the request bytes.
-            modReqResp = self._callbacks.makeHttpRequest(messageInfo.getHttpService(), requestBytes)
-            modRequestBytes = modReqResp.getRequest()
-            modResponseBytes = modReqResp.getResponse()
-            modResponse = self._helpers.analyzeResponse(modResponseBytes)
+            wasModified = False
+            if self._isRegexp.isSelected():
+                if search(self._matchString.getText(), requestBytes):
+                    requestBytes = sub(self._matchString.getText(), self._replaceString.getText(), requestBytes)
+                    wasModified = True
+            else:
+                if self._matchString in requestBytes:
+                    requestBytes = replace(requestBytes, self._matchString, self._replaceString)
+                    wasModified = True
 
-            orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
-            mod = self._callbacks.saveBuffersToTempFiles(modReqResp)
-            entry = LogEntry(orig, mod, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes))
+            # make a modified request to test for authorization issues
+            entry = None
+            if wasModified:
+                modReqResp = self._callbacks.makeHttpRequest(messageInfo.getHttpService(), requestBytes)
+                modRequestBytes = modReqResp.getRequest()
+                modResponseBytes = modReqResp.getResponse()
+                modResponse = self._helpers.analyzeResponse(modResponseBytes)
+                orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
+                mod = self._callbacks.saveBuffersToTempFiles(modReqResp)
+                entry = LogEntry(orig, mod, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes), wasModified)
+            else:
+                orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
+                entry = LogEntry(orig, None, request.getUrl(), response.getStatusCode(), len(responseBytes), "None", 0, wasModified)
 
             self._lock.acquire()
             self._log.add(entry)
@@ -170,18 +185,20 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return 0
 
     def getColumnCount(self):
-        return 5
+        return 6
 
     def getColumnName(self, columnIndex):
         if columnIndex == 0:
             return "URL"
         if columnIndex == 1:
-            return "Orig. Status"
+            return "Modified?"
         if columnIndex == 2:
-            return "Orig. Length"
+            return "Orig. Status"
         if columnIndex == 3:
-            return "Mod. Status"
+            return "Orig. Length"
         if columnIndex == 4:
+            return "Mod. Status"
+        if columnIndex == 5:
             return "Mod. Length"
         return ""
 
@@ -190,12 +207,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 0:
             return logEntry._url.toString()
         if columnIndex == 1:
-            return str(logEntry._origStatus)
+            return str(logEntry._wasModified)
         if columnIndex == 2:
-            return str(logEntry._origLength)
+            return str(logEntry._origStatus)
         if columnIndex == 3:
-            return str(logEntry._modStatus)
+            return str(logEntry._origLength)
         if columnIndex == 4:
+            return str(logEntry._modStatus)
+        if columnIndex == 5:
             return str(logEntry._modLength)
         return ""
 
@@ -230,8 +249,9 @@ class Table(JTable):
         logEntry = self._extender._log.get(row)
         self._extender._origRequestViewer.setMessage(logEntry._origRequestResponse.getRequest(), True)
         self._extender._origResponseViewer.setMessage(logEntry._origRequestResponse.getResponse(), False)
-        self._extender._modRequestViewer.setMessage(logEntry._modRequestResponse.getRequest(), True)
-        self._extender._modResponseViewer.setMessage(logEntry._modRequestResponse.getResponse(), False)
+        if not logEntry._modRequestResponse is None:
+            self._extender._modRequestViewer.setMessage(logEntry._modRequestResponse.getRequest(), True)
+            self._extender._modResponseViewer.setMessage(logEntry._modRequestResponse.getResponse(), False)
         self._extender._currentlyDisplayedItem = logEntry._origRequestResponse
         
         JTable.changeSelection(self, row, col, toggle, extend)
@@ -243,7 +263,7 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, origRequestResponse, modRequestResponse, url, origStatus, origLength, modStatus, modLength):
+    def __init__(self, origRequestResponse, modRequestResponse, url, origStatus, origLength, modStatus, modLength, wasModified):
         self._origRequestResponse = origRequestResponse
         self._modRequestResponse = modRequestResponse
         self._url = url
@@ -251,4 +271,5 @@ class LogEntry:
         self._origLength = origLength
         self._modStatus = modStatus
         self._modLength = modLength
+        self._wasModified = wasModified
         return
