@@ -24,6 +24,7 @@ from string import replace, find
 #TODO(kkl): Make the table UI sortable.
 #TODO(kkl): A setting for hiding unmodified requests/responses.
 #TODO(kkl): Allow for a configurable amount of request modifications.
+#TODO(kkl): Ignore typically static file extensions by default (e.g. js, css). Allow for opt-out..
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
     
@@ -84,10 +85,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # table of log entries
         logTable = Table(self)
         logTable.getColumnModel().getColumn(0).setPreferredWidth(700)
-        logTable.getColumnModel().getColumn(1).setPreferredWidth(100)
-        logTable.getColumnModel().getColumn(2).setPreferredWidth(150)
-        logTable.getColumnModel().getColumn(3).setPreferredWidth(100)
-        logTable.getColumnModel().getColumn(4).setPreferredWidth(150)
+        logTable.getColumnModel().getColumn(1).setPreferredWidth(150)
+        logTable.getColumnModel().getColumn(2).setPreferredWidth(100)
+        logTable.getColumnModel().getColumn(3).setPreferredWidth(130)
+        logTable.getColumnModel().getColumn(4).setPreferredWidth(100)
+        logTable.getColumnModel().getColumn(5).setPreferredWidth(130)
         scrollPane = JScrollPane(logTable)
         self._logPane.setLeftComponent(scrollPane)
 
@@ -199,7 +201,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 0:
             return "URL"
         if columnIndex == 1:
-            return "Modified?"
+            return "Request Modified?"
         if columnIndex == 2:
             return "Orig. Status"
         if columnIndex == 3:
