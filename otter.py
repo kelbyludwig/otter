@@ -10,6 +10,7 @@ from javax.swing import JScrollPane;
 from javax.swing import JSplitPane;
 from javax.swing import JTabbedPane;
 from javax.swing import JTable;
+from javax.swing import JPanel;
 from javax.swing import SwingUtilities;
 from javax.swing.table import AbstractTableModel;
 from threading import Lock
@@ -34,28 +35,32 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # create the log and a lock on which to synchronize when adding log entries
         self._log = ArrayList()
         self._lock = Lock()
-        
-        # main split pane
-        self._splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+       
+        # main split pane for log entries and request/response viewing
+        self._settingpanel = JPanel()
+        self._logpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
         
         # table of log entries
         logTable = Table(self)
         scrollPane = JScrollPane(logTable)
-        self._splitpane.setLeftComponent(scrollPane)
+        self._logpane.setLeftComponent(scrollPane)
 
         # tabs with request/response viewers
-        tabs = JTabbedPane()
+        logTabs = JTabbedPane()
         self._requestViewer = callbacks.createMessageEditor(self, False)
         self._responseViewer = callbacks.createMessageEditor(self, False)
-        tabs.addTab("Request", self._requestViewer.getComponent())
-        tabs.addTab("Response", self._responseViewer.getComponent())
-        self._splitpane.setRightComponent(tabs)
+        logTabs.addTab("Request", self._requestViewer.getComponent())
+        logTabs.addTab("Response", self._responseViewer.getComponent())
+        self._logpane.setRightComponent(logTabs)
         
-        # customize our UI components
-        callbacks.customizeUiComponent(self._splitpane)
-        callbacks.customizeUiComponent(logTable)
-        callbacks.customizeUiComponent(scrollPane)
-        callbacks.customizeUiComponent(tabs)
+        # top most tab interface that seperates log entries from settings
+        maintabs = JTabbedPane()
+        maintabs.addTab("Log Entries", self._logpane)
+        maintabs.addTab("Settings", self._settingpanel)
+        self._maintabs = maintabs
+       
+        # customize the UI components
+        callbacks.customizeUiComponent(maintabs)
         
         # add the custom tab to Burp's UI
         callbacks.addSuiteTab(self)
@@ -73,7 +78,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         return "Otter"
     
     def getUiComponent(self):
-        return self._splitpane
+        return self._maintabs
         
     #
     # implement IHttpListener
