@@ -81,10 +81,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         # tabs with request/response viewers
         logTabs = JTabbedPane()
-        self._requestViewer = callbacks.createMessageEditor(self, False)
-        self._responseViewer = callbacks.createMessageEditor(self, False)
-        logTabs.addTab("Request", self._requestViewer.getComponent())
-        logTabs.addTab("Response", self._responseViewer.getComponent())
+        self._origRequestViewer = callbacks.createMessageEditor(self, False)
+        self._origResponseViewer = callbacks.createMessageEditor(self, False)
+        self._modRequestViewer = callbacks.createMessageEditor(self, False)
+        self._modResponseViewer = callbacks.createMessageEditor(self, False)
+        logTabs.addTab("Original Request", self._origRequestViewer.getComponent())
+        logTabs.addTab("Original Response", self._origResponseViewer.getComponent())
+        logTabs.addTab("Modified Request", self._modRequestViewer.getComponent())
+        logTabs.addTab("Modified Response", self._modResponseViewer.getComponent())
         self._logPane.setRightComponent(logTabs)
         
         # top most tab interface that seperates log entries from settings
@@ -140,7 +144,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             modResponseBytes = modReqResp.getResponse()
             modResponse = self._helpers.analyzeResponse(modResponseBytes)
 
-            entry = LogEntry(self._callbacks.saveBuffersToTempFiles(messageInfo), request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes))
+            orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
+            modd = self._callbacks.saveBuffersToTempFiles(modReqResp)
+            entry = LogEntry(orig, modd, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes))
 
             self._lock.acquire()
             self._log.add(entry)
@@ -217,9 +223,11 @@ class Table(JTable):
     
         # show the log entry for the selected row
         logEntry = self._extender._log.get(row)
-        self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
-        self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
-        self._extender._currentlyDisplayedItem = logEntry._requestResponse
+        self._extender._origRequestViewer.setMessage(logEntry._origRequestResponse.getRequest(), True)
+        self._extender._origResponseViewer.setMessage(logEntry._origRequestResponse.getResponse(), False)
+        self._extender._modRequestViewer.setMessage(logEntry._modRequestResponse.getRequest(), True)
+        self._extender._modResponseViewer.setMessage(logEntry._modRequestResponse.getResponse(), False)
+        self._extender._currentlyDisplayedItem = logEntry._origRequestResponse
         
         JTable.changeSelection(self, row, col, toggle, extend)
         return
@@ -230,8 +238,9 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, requestResponse, url, origStatus, origLength, modStatus, modLength):
-        self._requestResponse = requestResponse
+    def __init__(self, origRequestResponse, modRequestResponse, url, origStatus, origLength, modStatus, modLength):
+        self._origRequestResponse = origRequestResponse
+        self._modRequestResponse = modRequestResponse
         self._url = url
         self._origStatus = origStatus
         self._origLength = origLength
