@@ -158,14 +158,24 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 return
 
             wasModified = False
-            if self._isRegexp.isSelected():
-                if search(self._matchString.getText(), requestBytes):
-                    requestBytes = sub(self._matchString.getText(), self._replaceString.getText(), requestBytes)
-                    wasModified = True
-            else:
-                if fromBytes(requestBytes).find(self._matchString.getText()) >= 0:
-                    requestBytes = toBytes(replace(fromBytes(requestBytes), self._matchString.getText(), self._replaceString.getText()))
-                    wasModified = True
+            ms = self._matchString.getText()
+            rs = self._replaceString.getText()
+            mss = ms.split(",")
+            rss = rs.split(",")
+            if len(rss) != len(mss):
+                mss = [""]
+                
+            for i,x in enumerate(mss):
+                if x == "":
+                    continue
+                if self._isRegexp.isSelected():
+                    if search(x, requestBytes):
+                        requestBytes = sub(x, rss[i], requestBytes)
+                        wasModified = True
+                else:
+                    if fromBytes(requestBytes).find(x) >= 0:
+                        requestBytes = toBytes(replace(fromBytes(requestBytes), x, rss[i]))
+                        wasModified = True
 
             # make a modified request to test for authorization issues
             entry = None
