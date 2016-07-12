@@ -18,16 +18,25 @@ make testing application access controls as simple as browsing the application.
 
 ## setup 
 
+* Download [Jython](http://www.jython.org/downloads.html) (Otter was tested
+  with Jython 2.7.0) and point Burp towards this JAR: "Extender" -> "Options"
+  -> "Python Environment".
+
 * Install the Burp extension: "Extender" -> "Extensions" -> "Add" -> "Extension
-  Type: Python" -> Browse to otter.py
+  Type: Python" -> Browse to otter.py.
 
 * Otter will ignore requests based on your scope configuration: "Target" ->
-  "Scope"
+  "Scope".
 
 * Configure your session match-and-replace in otter's "Settings" tab. Only
   requests that include the "String to Match" somewhere in the request will be
   modified and re-sent. Unmodified requests are noted in the UI with the
   "Request Modified?" column.
+
+* Otter also supports multiple match-and-replace values. These values are
+  provided via a comma-separated list. For example, the match string "abc,def"
+  and the replace string "123,456" will replace "abc" with "123" for all
+  in-scope requests.
 
 ## why "otter"?
 
