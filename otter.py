@@ -87,19 +87,19 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._settingPanel.add(replaceString)
         
         # table of log entries
-        logTable = Table(self)
-        logTable.getColumnModel().getColumn(0).setPreferredWidth(700)
-        logTable.getColumnModel().getColumn(1).setPreferredWidth(150)
-        logTable.getColumnModel().getColumn(2).setPreferredWidth(100)
-        logTable.getColumnModel().getColumn(3).setPreferredWidth(130)
-        logTable.getColumnModel().getColumn(4).setPreferredWidth(100)
-        logTable.getColumnModel().getColumn(5).setPreferredWidth(130)
+        self.logTable = Table(self)
+        self.logTable.getColumnModel().getColumn(0).setPreferredWidth(700)
+        self.logTable.getColumnModel().getColumn(1).setPreferredWidth(150)
+        self.logTable.getColumnModel().getColumn(2).setPreferredWidth(100)
+        self.logTable.getColumnModel().getColumn(3).setPreferredWidth(130)
+        self.logTable.getColumnModel().getColumn(4).setPreferredWidth(100)
+        self.logTable.getColumnModel().getColumn(5).setPreferredWidth(130)
 
         # rudimentary row sorting, use .setRowFilter for filters
         self.tableSorter = TableRowSorter(self)
-        logTable.setRowSorter(self.tableSorter)
+        self.logTable.setRowSorter(self.tableSorter)
 
-        scrollPane = JScrollPane(logTable)
+        scrollPane = JScrollPane(self.logTable)
         self._logPane.setLeftComponent(scrollPane)
 
         # tabs with request/response viewers
@@ -275,7 +275,7 @@ class Table(JTable):
     def changeSelection(self, row, col, toggle, extend):
     
         # show the log entry for the selected row
-        logEntry = self._extender._log.get(row)
+        logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
         self._extender._origRequestViewer.setMessage(logEntry._origRequestResponse.getRequest(), True)
         self._extender._origResponseViewer.setMessage(logEntry._origRequestResponse.getResponse(), False)
         if not logEntry._modRequestResponse is None:
