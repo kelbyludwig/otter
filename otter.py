@@ -15,6 +15,7 @@ from javax.swing import JTextArea;
 from javax.swing import JCheckBox;
 from javax.swing import JPanel;
 from javax.swing import SwingUtilities;
+from javax.swing.table import TableRowSorter;
 from javax.swing.table import AbstractTableModel;
 from org.python.core.util.StringUtil import fromBytes, toBytes;
 from threading import Lock
@@ -93,6 +94,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         logTable.getColumnModel().getColumn(3).setPreferredWidth(130)
         logTable.getColumnModel().getColumn(4).setPreferredWidth(100)
         logTable.getColumnModel().getColumn(5).setPreferredWidth(130)
+
+        # rudimentary row sorting, use .setRowFilter for filters
+        self.tableSorter = TableRowSorter(self)
+        logTable.setRowSorter(self.tableSorter)
+
         scrollPane = JScrollPane(logTable)
         self._logPane.setLeftComponent(scrollPane)
 
