@@ -22,7 +22,6 @@ from threading import Lock
 from re import search, sub
 from string import replace, find
 
-#TODO(kkl): Make the table UI sortable.
 #TODO(kkl): A setting for hiding unmodified requests/responses.
 #TODO(kkl): Allow for a configurable amount of request modifications.
 #TODO(kkl): Ignore typically static file extensions by default (e.g. js, css). Allow for opt-out..
@@ -80,11 +79,22 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         replaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         replaceString.setBounds(10, 290, 400, 200)
 
+        ignoreLabel = JLabel("Extensions to Ignore:")
+        ignoreLabel.setBounds(10, 500, 200, 20)
+        self._ignoreString = JTextArea("js,gif,jpg,png,css")
+        self._ignoreString.setWrapStyleWord(True)
+        self._ignoreString.setLineWrap(True)
+        ignoreString = JScrollPane(self._ignoreString)
+        ignoreString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        ignoreString.setBounds(10, 520, 400, 80)
+
         self._settingPanel.add(self._isRegexp)
         self._settingPanel.add(matchLabel)
         self._settingPanel.add(matchString)
         self._settingPanel.add(replaceLabel)
         self._settingPanel.add(replaceString)
+        self._settingPanel.add(ignoreLabel)
+        self._settingPanel.add(ignoreString)
         
         # table of log entries
         self.logTable = Table(self)
@@ -197,10 +207,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
                 entry = LogEntry(orig, None, request.getUrl(), response.getStatusCode(), len(responseBytes), "None", 0, wasModified)
 
-            self._lock.acquire()
-            self._log.add(entry)
-            self.fireTableRowsInserted(row, row)
-            self._lock.release()
+            if wasModified:
+                self._lock.acquire()
+                self._log.add(entry)
+                self.fireTableRowsInserted(row, row)
+                self._lock.release()
         return
 
     #
