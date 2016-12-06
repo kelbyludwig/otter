@@ -24,7 +24,6 @@ from string import replace, find
 
 #TODO(kkl): A setting for hiding unmodified requests/responses.
 #TODO(kkl): Allow for a configurable amount of request modifications.
-#TODO(kkl): Ignore typically static file extensions by default (e.g. js, css). Allow for opt-out..
 #TODO(kkl): Another useful response difference metric could be difflib's
 #           `ratio` method. This would likely require hideable columns in the log-entry as
 #           I don't think this would be useful by default to most.
@@ -176,8 +175,19 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             wasModified = False
             ms = self._matchString.getText()
             rs = self._replaceString.getText()
+            ist = self._ignoreString.getText()
             mss = ms.split(",")
             rss = rs.split(",")
+            iss = ist.split(",")
+            
+            # skip ignored extensions
+            if len(iss) > 0:
+                fname = request.getUrl().getFile()
+                ext = fname.split(".")[-1]
+                for ist in iss:
+                    if ist == ext:
+                        return
+
             if len(rss) != len(mss):
                 mss = [""]
                 
@@ -203,10 +213,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
                 mod = self._callbacks.saveBuffersToTempFiles(modReqResp)
                 entry = LogEntry(orig, mod, request.getUrl(), response.getStatusCode(), len(responseBytes), modResponse.getStatusCode(), len(modResponseBytes), wasModified)
-            else:
-                orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
-                entry = LogEntry(orig, None, request.getUrl(), response.getStatusCode(), len(responseBytes), "None", 0, wasModified)
+            #TODO(kkl): I can use this if I want to save non-modified requests for whatever reason.
+            #else:
+            #    orig = self._callbacks.saveBuffersToTempFiles(messageInfo)
+            #    entry = LogEntry(orig, None, request.getUrl(), response.getStatusCode(), len(responseBytes), "None", 0, wasModified)
 
+            # log all modified requests
             if wasModified:
                 self._lock.acquire()
                 self._log.add(entry)
